@@ -1,0 +1,11 @@
+#.gitignore
+
+#folders
+.idea/
+.vs/
+cmake-build-debug/
+
+#files
+.cproject
+.mxproject
+.project

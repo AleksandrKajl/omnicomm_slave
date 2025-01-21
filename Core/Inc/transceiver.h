@@ -1,0 +1,10 @@
+//
+// Created by Aleksandr on 21.01.2025.
+//
+
+#ifndef OMNICOMM_SLAVE_TRANSCEIVER_H
+#define OMNICOMM_SLAVE_TRANSCEIVER_H
+
+
+
+#endif //OMNICOMM_SLAVE_TRANSCEIVER_H
