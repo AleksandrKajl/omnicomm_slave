@@ -22,8 +22,8 @@
 
 /* USER CODE BEGIN 0 */
 char rx_str[30], tx_str[30], tmp_str[10];
-uint8_t g_fl=0;
-uint8_t g_dt1;
+uint8_t g_data_fl = 0;
+uint8_t g_data[256]={};
 
 /* USER CODE END 0 */
 
@@ -84,7 +84,24 @@ void MX_USART1_UART_Init(void)
 /* USER CODE BEGIN 1 */
 void  USART1_RX_Callback(void)
 {
-    g_dt1 = LL_USART_ReceiveData8(USART1);
-    g_fl=1;
+    static uint16_t idx = 0;
+    if (idx > 0xFF) {
+        idx = 0;
+    }
+
+    g_data[idx++] = LL_USART_ReceiveData8(USART1);
+
 }
+
+void USART_TX(uint8_t* dt, uint16_t sz)
+{
+    uint16_t ind = 0;
+    while (ind<sz)
+    {
+        while (!LL_USART_IsActiveFlag_TXE(USART1)) {}
+        LL_USART_TransmitData8(USART1,*(uint8_t*)(dt+ind));
+        ind++;
+    }
+}
+
 /* USER CODE END 1 */

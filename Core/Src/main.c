@@ -89,15 +89,19 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-
+    LL_USART_EnableIT_RXNE(USART1);
+    LL_USART_EnableIT_ERROR(USART1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  extern uint8_t g_data_fl;
+  extern uint8_t *g_data;
+
+  uint8_t data[10];
   while (1)
   {
     /* USER CODE END WHILE */
-
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
