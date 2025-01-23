@@ -3,7 +3,6 @@
 //
 #include "transceiver.h"
 #include "ring_buf.h"
-#include <string.h>
 
 uint8_t get_crc(const uint8_t *data, uint16_t size)
 {
@@ -24,18 +23,15 @@ uint8_t get_crc(const uint8_t *data, uint16_t size)
     return crc;
 }
 
-uint8_t check_crc()
-{
-
-}
-
-
 uint16_t get_msg_sz(uint8_t cmd)
 {
     uint16_t size = 0;
     if (cmd == CMD_GET_DATA) {
         size = GET_DATA_SZ;
+    } else if (cmd == CMD_EXAMPLE) {
+        size = EXAMPLE_SZ;
     }
+
 
     return size;
 }
@@ -50,7 +46,7 @@ uint8_t get_msg(RING_buffer_t *ring_buff, uint8_t msg)
         if (RING_peek(i, ring_buff) == CMD_PREFIX) {        //Начало запроса
             if (RING_peek(i, ring_buff) != NET_ADDR) {      //Если не нам
                 i += get_msg_sz(RING_peek(i + cmd_offset, ring_buff));      //Пропускаем это сообщение
-                ring_buff->idxOut += (i + GET_DATA_SZ);                                       //Удаляем из буфера
+                ring_buff->idxOut += i;                                       //Удаляем из буфера
             }
 
             if (RING_peek(i + cmd_offset, ring_buff) == msg) {
@@ -61,7 +57,16 @@ uint8_t get_msg(RING_buffer_t *ring_buff, uint8_t msg)
                         RING_put(CMD_GET_DATA, &have_cmd);
                         return 0;
                     }
+                } else if (msg == CMD_EXAMPLE) {
+                    //ring_buff->idxOut += (i + EXAMPLE_SZ);
+                    //RING_put(CMD_EXAMPLE, &have_cmd);
+                    //RING_put(data1, &have_cmd);
+                    //RING_put(data2, &have_cmd);
+                    /*
+                        ANY CODE
+                    */
                 }
+
             }
         }
     }
