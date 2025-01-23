@@ -16,15 +16,13 @@
   *
   ******************************************************************************
   */
+#include "ring_buf.h"
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
-char rx_str[30], tx_str[30], tmp_str[10];
-uint8_t g_data_fl = 0;
-uint8_t g_data[256]={};
-
+extern RING_buffer_t rx_buff;
 /* USER CODE END 0 */
 
 /* USART1 init function */
@@ -75,8 +73,8 @@ void MX_USART1_UART_Init(void)
   LL_USART_Init(USART1, &USART_InitStruct);
   LL_USART_ConfigAsyncMode(USART1);
   LL_USART_Enable(USART1);
-  /* USER CODE BEGIN USART1_Init 2 */
 
+  /* USER CODE BEGIN USART1_Init 2 */
   /* USER CODE END USART1_Init 2 */
 
 }
@@ -84,19 +82,13 @@ void MX_USART1_UART_Init(void)
 /* USER CODE BEGIN 1 */
 void  USART1_RX_Callback(void)
 {
-    static uint16_t idx = 0;
-    if (idx > 0xFF) {
-        idx = 0;
-    }
-
-    g_data[idx++] = LL_USART_ReceiveData8(USART1);
-
+    RING_put(LL_USART_ReceiveData8(USART1), &rx_buff);
 }
 
 void USART_TX(uint8_t* dt, uint16_t sz)
 {
     uint16_t ind = 0;
-    while (ind<sz)
+    while (ind < sz)
     {
         while (!LL_USART_IsActiveFlag_TXE(USART1)) {}
         LL_USART_TransmitData8(USART1,*(uint8_t*)(dt+ind));

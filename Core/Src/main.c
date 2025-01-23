@@ -23,7 +23,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "ring_buf.h"
+#include "transceiver.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,7 +56,8 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+RING_buffer_t rx_buff;
+RING_buffer_t have_cmd;
 /* USER CODE END 0 */
 
 /**
@@ -66,7 +68,8 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  uint8_t rxbuff_data[RING_BUFF_SZ]={};
+  uint8_t havecmd_data[RING_BUFF_SZ]={};
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -91,14 +94,13 @@ int main(void)
   /* USER CODE BEGIN 2 */
     LL_USART_EnableIT_RXNE(USART1);
     LL_USART_EnableIT_ERROR(USART1);
+
+    RING_init(&rx_buff, rxbuff_data, RING_BUFF_SZ);
+    RING_init(&have_cmd, havecmd_data, RING_BUFF_SZ);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  extern uint8_t g_data_fl;
-  extern uint8_t *g_data;
-
-  uint8_t data[10];
   while (1)
   {
     /* USER CODE END WHILE */
