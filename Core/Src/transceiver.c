@@ -4,6 +4,7 @@
 #include "transceiver.h"
 #include "ring_buf.h"
 #include "crc.h"
+#include "uart.h"
 
 uint8_t transceiver_get_msg(RING_buffer_t *ring_buff)
 {
@@ -18,7 +19,7 @@ uint8_t transceiver_get_msg(RING_buffer_t *ring_buff)
             if (crc == RING_peek(i + REQ_SZ - 1, ring_buff)) {
                 if (RING_peek(i+1, ring_buff) != NET_ADDR) {          //Если не нам
                     i += REQ_SZ;                                                  //Пропускаем это сообщение
-                    RING_leave(i, ring_buff);                                     //Удаляем из буфера
+                    continue;
                 }
 
                 RING_put(RING_peek(i+cmd_offset, ring_buff), &have_cmd);                                            //Помещаем команду в кольцевой буфер для команд
@@ -31,5 +32,11 @@ uint8_t transceiver_get_msg(RING_buffer_t *ring_buff)
     RING_leave(data_cnt, ring_buff);                        //Удаляем проверенные данные
 
     return -1;
+}
+
+void transceiver_send_msg(uint8_t *data, uint16_t size)
+{
+    //Своя реализация отправки данных по uart
+    UART_TX(data, size);
 }
 

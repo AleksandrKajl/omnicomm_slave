@@ -27,6 +27,7 @@
 #include "transceiver.h"
 #include "sensor.h"
 #include <string.h>
+#include "crc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -95,13 +96,13 @@ int main(void)
     LL_USART_EnableIT_RXNE(USART1);
     LL_USART_EnableIT_ERROR(USART1);
 
-    SysTick_Config(SystemCoreClock/1000); // will generate an overflow interrupt every ms.
+    SysTick_Config(SystemCoreClock/1000);   //Для генерации псевдослучайных чисел в функции sensor_get_data.
 
-    uint8_t rxbuff_data[RING_BUFF_SZ]={};
-    uint8_t havecmd_data[RING_BUFF_SZ]={};
+    uint8_t rxbuff_data[RING_BUFF_SZ];
+    uint8_t havecmd_data[RING_BUFF_SZ];
 
-    RING_init(&rx_buff, rxbuff_data, RING_BUFF_SZ);
-    RING_init(&have_cmd, havecmd_data, RING_BUFF_SZ);
+    RING_init(&rx_buff, rxbuff_data, RING_BUFF_SZ);             //Инициализация кольцевых буферов
+    RING_init(&have_cmd, havecmd_data, RING_BUFF_SZ);           //Инициализация кольцевых буферов
 
     Sensor_data_t sens_data;        //Создаём структуру для хранения значений полученных от датчика
     memset(&sens_data, 0x00, sizeof(Sensor_data_t));
@@ -109,17 +110,17 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-    extern uint32_t SysTick_counter;
   while (1)
   {
-      if (RING_get_count(&rx_buff) >= GET_DATA_SZ) {
-          transceiver_get_msg(&rx_buff, CMD_GET_DATA);
+      if (RING_get_count(&rx_buff) >= REQ_SZ) {
+          transceiver_get_msg(&rx_buff);
       }
 
       if (RING_get_count(&have_cmd) > 0) {
           uint8_t cmd = RING_pop(&have_cmd);
           if (cmd == CMD_GET_DATA) {
               sensor_get_data(&sens_data);
+              transceiver_send_msg((uint8_t*)&sens_data, sizeof(Sensor_data_t));
 
           } else if (cmd == CMD_EXAMPLE) {
               /*
