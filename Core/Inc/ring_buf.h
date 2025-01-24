@@ -8,7 +8,7 @@
 
 #define RING_BUFF_SZ                                                0x100
 
-typedef struct {
+typedef struct{
     uint8_t *buffer;
     uint16_t idxIn;
     uint16_t idxOut;

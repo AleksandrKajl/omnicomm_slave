@@ -46,7 +46,7 @@
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
-void  USART1_RX_Callback(void);
+void  UART1_RX_Callback(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -58,7 +58,7 @@ void  USART1_RX_Callback(void);
 extern TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN EV */
-
+volatile uint32_t SysTick_counter = 0;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -174,7 +174,6 @@ void PendSV_Handler(void)
 
   /* USER CODE END PendSV_IRQn 0 */
   /* USER CODE BEGIN PendSV_IRQn 1 */
-
   /* USER CODE END PendSV_IRQn 1 */
 }
 
@@ -184,7 +183,7 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
-
+    SysTick_counter++;
   /* USER CODE END SysTick_IRQn 0 */
 
   /* USER CODE BEGIN SysTick_IRQn 1 */
@@ -221,7 +220,7 @@ void USART1_IRQHandler(void)
   /* USER CODE BEGIN USART1_IRQn 0 */
     if(LL_USART_IsActiveFlag_RXNE(USART1) && LL_USART_IsEnabledIT_RXNE(USART1))
     {
-        USART1_RX_Callback();
+        UART1_RX_Callback();
     }
     else
     {
