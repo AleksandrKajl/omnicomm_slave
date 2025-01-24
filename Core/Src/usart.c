@@ -16,13 +16,11 @@
   *
   ******************************************************************************
   */
-#include "ring_buf.h"
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
-extern RING_buffer_t rx_buff;
 /* USER CODE END 0 */
 
 /* USART1 init function */
@@ -80,20 +78,5 @@ void MX_USART1_UART_Init(void)
 }
 
 /* USER CODE BEGIN 1 */
-void  USART1_RX_Callback(void)
-{
-    RING_put(LL_USART_ReceiveData8(USART1), &rx_buff);
-}
-
-void USART_TX(uint8_t* dt, uint16_t sz)
-{
-    uint16_t ind = 0;
-    while (ind < sz)
-    {
-        while (!LL_USART_IsActiveFlag_TXE(USART1)) {}
-        LL_USART_TransmitData8(USART1,*(uint8_t*)(dt+ind));
-        ind++;
-    }
-}
 
 /* USER CODE END 1 */
