@@ -11,7 +11,7 @@ typedef struct Sensor_data {
     uint8_t min_lvl;
     uint8_t max_lvl;
     uint16_t freq;
-}Sensor_data_t;
+}__attribute__((packed))Sensor_data_t;
 
 void sensor_get_data(Sensor_data_t *sens_data);
 
