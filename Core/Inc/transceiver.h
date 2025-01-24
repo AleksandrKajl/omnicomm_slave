@@ -6,6 +6,7 @@
 #define OMNICOMM_SLAVE_TRANSCEIVER_H
 
 #include <stdint.h>
+#include "ring_buf.h"
 
 #define GET_DATA_SZ                                 0x04
 #define EXAMPLE_SZ                                  0x06
@@ -14,5 +15,8 @@
 #define CMD_GET_DATA                                0x06
 #define CMD_EXAMPLE                                 0x77
 #define NET_ADDR                                    0x71
+
+
+uint8_t transceiver_get_msg(RING_buffer_t *ring_buff, uint8_t msg);
 
 #endif //OMNICOMM_SLAVE_TRANSCEIVER_H
