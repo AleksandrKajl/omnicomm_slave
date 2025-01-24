@@ -4,6 +4,7 @@
 #include "ring_buf.h"
 
 void RING_put(uint8_t symbol, RING_buffer_t* buf) {
+
     buf->buffer[buf->idxIn++] = symbol;
     if (buf->idxIn >= buf->size) {
         buf->idxIn = 0;
@@ -20,6 +21,13 @@ uint8_t RING_pop(RING_buffer_t *buf)
     return retval;
 }
 
+void RING_leave(uint16_t idx, RING_buffer_t *buf)
+{
+    for (uint16_t i = 0; i < idx; i++) {
+        RING_pop(buf);
+    }
+}
+
 int32_t RING_peek(uint16_t symbolNumber, RING_buffer_t *buf)
 {
     uint32_t pointer = buf->idxOut + symbolNumber;
@@ -33,6 +41,11 @@ int32_t RING_peek(uint16_t symbolNumber, RING_buffer_t *buf)
     }
 
     return retval;
+}
+
+uint8_t* RING_get_ptrdata(uint16_t idx, RING_buffer_t *buf)
+{
+    return buf->buffer + buf->idxOut + idx;
 }
 
 uint16_t RING_get_count(RING_buffer_t *buf)

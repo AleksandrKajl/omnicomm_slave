@@ -17,6 +17,8 @@ typedef struct{
 
 void RING_put(uint8_t symbol, RING_buffer_t* buf);
 uint8_t RING_pop(RING_buffer_t *buf);
+void RING_leave(uint16_t idx, RING_buffer_t *buf);
+uint8_t* RING_get_ptrdata(uint16_t idx, RING_buffer_t *buf);
 uint16_t RING_get_count(RING_buffer_t *buf);
 int32_t RING_peek(uint16_t symbolNumber ,RING_buffer_t *buf);
 void RING_clear(RING_buffer_t* buf);
