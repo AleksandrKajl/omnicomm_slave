@@ -28,11 +28,11 @@ void RING_leave(uint16_t idx, RING_buffer_t *buf)
     }
 }
 
-int32_t RING_peek(uint16_t symbolNumber, RING_buffer_t *buf)
+int32_t RING_peek(uint16_t symb_offset, RING_buffer_t *buf)
 {
-    uint32_t pointer = buf->idxOut + symbolNumber;
+    uint32_t pointer = buf->idxOut + symb_offset;
     int32_t  retval = -1;
-    if (symbolNumber < RING_get_count(buf))
+    if (symb_offset < RING_get_count(buf))
     {
         if (pointer > buf->size) {
             pointer -= buf->size;

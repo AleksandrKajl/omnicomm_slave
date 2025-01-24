@@ -36,7 +36,6 @@ uint8_t transceiver_get_msg(RING_buffer_t *ring_buff)
 
 void transceiver_send_msg(uint8_t *data, uint16_t size)
 {
-    //Своя реализация отправки данных по uart
     UART_TX(data, size);
 }
 
