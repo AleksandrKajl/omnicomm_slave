@@ -59,8 +59,10 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-RING_buffer_t rx_buff;
-RING_buffer_t have_cmd;
+//Создаём глобальные экземпляры структуры кольцевого буфера
+//для доступа к ним при помощи extern из других файлов
+RING_buffer_t g_rx_buff;
+RING_buffer_t g_have_cmd;
 /* USER CODE END 0 */
 
 /**
@@ -93,18 +95,20 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
+  //Включаем прерывания по приходу данных и при ошибках
     LL_USART_EnableIT_RXNE(USART1);
     LL_USART_EnableIT_ERROR(USART1);
 
     SysTick_Config(SystemCoreClock/1000);   //Для генерации псевдослучайных чисел в функции sensor_get_data.
 
+    //Создаём статические массивы для использования в качестве кольцевых буферов
     uint8_t rxbuff_data[RING_BUFF_SZ];
     uint8_t havecmd_data[RING_BUFF_SZ];
 
-    RING_init(&rx_buff, rxbuff_data, RING_BUFF_SZ);             //Инициализация кольцевых буферов
-    RING_init(&have_cmd, havecmd_data, RING_BUFF_SZ);           //Инициализация кольцевых буферов
+    RING_init(&g_rx_buff, rxbuff_data, RING_BUFF_SZ);             //Инициализация кольцевых буферов
+    RING_init(&g_have_cmd, havecmd_data, RING_BUFF_SZ);           //Инициализация кольцевых буферов
 
-    Sensor_data_t sens_data;        //Создаём структуру для хранения значений полученных от датчика
+    Sensor_data_t sens_data;                                      //Создаём структуру для хранения значений полученных от датчика
     memset(&sens_data, 0x00, sizeof(Sensor_data_t));
   /* USER CODE END 2 */
 
@@ -112,15 +116,18 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-      if (RING_get_count(&rx_buff) >= REQ_SZ) {
-          transceiver_get_msg(&rx_buff);
+      //Если в кольцевом буфере есть данные >= одному сообщению
+      if (RING_get_count(&g_rx_buff) >= REQ_SZ) {
+          transceiver_get_msg(&g_rx_buff);                          //Извлекаем комманду
       }
 
-      if (RING_get_count(&have_cmd) > 0) {
-          uint8_t cmd = RING_pop(&have_cmd);
+      //Если уже получили комманду
+      if (RING_get_count(&g_have_cmd) > 0) {
+          uint8_t cmd = RING_pop(&g_have_cmd);                      //Получаем её
+          //Логика для разных команд
           if (cmd == CMD_GET_DATA) {
-              sensor_get_data(&sens_data);
-              transceiver_send_msg((uint8_t*)&sens_data, sizeof(Sensor_data_t));
+              sensor_get_data(&sens_data);                          //Получаем данные от датчика
+              transceiver_send_msg((uint8_t*)&sens_data, CMD_GET_DATA, sizeof(Sensor_data_t));      //Отправляем данные
 
           } else if (cmd == CMD_EXAMPLE) {
               /*
