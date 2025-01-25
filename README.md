@@ -51,4 +51,12 @@ U8 CRC8(U8 data, U8 crc)
     return crc;
 }
 ```
+## Информация о проекта
+Проект для микроконтроллера ***cs32f103c8_blue_pill***(Китайский аналог
+***stm32f103c8_blue_pill***), начальная инициализация сгенерирована программой
+**CubeMx**. Разработан на **IDE** ***CLion*** с использованием **Arm GNU Toolchain**
+и **OpenOCD**.  
+Проект можно запустить для ***stm32f103c8_blue_pill*** если заменить **cs32f103c8_blue_pill(stlink).cfg** 
+на **stm32f103c8_blue_pill.cfg**.
+
  
