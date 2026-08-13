@@ -56,7 +56,18 @@ U8 CRC8(U8 data, U8 crc)
 ***stm32f103c8_blue_pill***), начальная инициализация сгенерирована программой
 **CubeMx**. Разработан на **IDE** ***CLion*** с использованием **Arm GNU Toolchain**
 и **OpenOCD**.  
-Проект можно запустить для ***stm32f103c8_blue_pill*** если заменить **cs32f103c8_blue_pill(stlink).cfg** 
+Проект можно запустить для ***stm32f103c8_blue_pill*** если заменить **ocd/cs32f103c8_blue_pill(stlink).cfg**
 на **stm32f103c8_blue_pill.cfg**.
+
+### Сборка
+
+Для сборки необходимы CMake 3.20+, Ninja и Arm GNU Toolchain, доступные через `PATH`.
+
+```shell
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+```
+
+Файлы `omnicomm_slave.elf`, `omnicomm_slave.hex`, `omnicomm_slave.bin` и карта памяти создаются в каталоге `build`.
 
  
