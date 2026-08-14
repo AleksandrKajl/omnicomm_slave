@@ -70,4 +70,14 @@ cmake --build build
 
 Файлы `omnicomm_slave.elf`, `omnicomm_slave.hex`, `omnicomm_slave.bin` и карта памяти создаются в каталоге `build`.
 
+### Тесты
+
+CRC проверяется на ПК без кросс-компилятора и внешнего тестового фреймворка.
+
+```shell
+cmake -S tests -B build/tests -G Ninja
+cmake --build build/tests
+ctest --test-dir build/tests --output-on-failure
+```
+
  
