@@ -45,3 +45,26 @@ target_compile_options(ring_buf_test PRIVATE
 )
 
 add_test(NAME ring_buf_test COMMAND ring_buf_test)
+
+add_executable(transceiver_parser_test
+    transceiver_parser_test.c
+    ../src/crc.c
+    ../src/transceiver.c
+)
+
+target_include_directories(transceiver_parser_test PRIVATE
+    ../inc
+    ../inc/hardware
+)
+
+target_compile_features(transceiver_parser_test PRIVATE
+    c_std_99
+)
+
+target_compile_options(transceiver_parser_test PRIVATE
+    -Wall
+    -Wextra
+    -Wpedantic
+)
+
+add_test(NAME transceiver_parser_test COMMAND transceiver_parser_test)
