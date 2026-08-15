@@ -13,4 +13,7 @@
 */
 void UART_TX(uint8_t* dt, uint16_t sz);
 
+/*! @brief Получение количества байтов, отброшенных из-за заполнения RX-буфера. */
+uint32_t UART_get_rx_overflow_count(void);
+
 #endif //OMNICOMM_SLAVE_UART_H

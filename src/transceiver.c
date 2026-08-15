@@ -12,25 +12,33 @@ uint8_t transceiver_get_msg(RING_buffer_t *ring_buff)
     extern RING_buffer_t g_have_cmd;       //Кольцевой буфер для полученных команд
     const uint8_t cmd_offset = 2;       //Смещение cmd от начала сообщения
     uint8_t crc = 0;
+    uint8_t symbol = 0;
     uint16_t data_cnt = RING_get_count(ring_buff);          //Количество принятых символов в буфере
     for (uint16_t i = 0; i < data_cnt; i++) {
-        if (RING_peek(i, ring_buff) == CMD_PREFIX) {        //Начало запроса
+        RING_peek(ring_buff, i, &symbol);
+        if (symbol == CMD_PREFIX) {        //Начало запроса
             if (data_cnt - i < REQ_SZ) {
                 break;
             }
             //Для подддержки команд разной длинны нужно их размер указывать в команде(запросе).
             crc = 0;
             for (uint16_t crc_idx = 0; crc_idx < REQ_SZ - 1; crc_idx++) {
-                crc = crc8_update((uint8_t)RING_peek(i + crc_idx, ring_buff), crc);
+                RING_peek(ring_buff, i + crc_idx, &symbol);
+                crc = crc8_update(symbol, crc);
             }
             //Если crc сумма совпадает
-            if (crc == RING_peek(i + REQ_SZ - 1, ring_buff)) {
-                if (RING_peek(i+1, ring_buff) != NET_ADDR) {          //Если не нам
+            RING_peek(ring_buff, i + REQ_SZ - 1, &symbol);
+            if (crc == symbol) {
+                RING_peek(ring_buff, i + 1, &symbol);
+                if (symbol != NET_ADDR) {          //Если не нам
                     i += REQ_SZ;                                                  //Пропускаем это сообщение
                     continue;
                 }
                 //Помещаем команду в кольцевой буфер для команд
-                RING_put(RING_peek(i+cmd_offset, ring_buff), &g_have_cmd);
+                RING_peek(ring_buff, i + cmd_offset, &symbol);
+                if (!RING_put(symbol, &g_have_cmd)) {
+                    return -1;
+                }
                 //Удаляем из буфера
                 RING_leave(i + REQ_SZ, ring_buff);
                 return 0;

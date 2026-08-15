@@ -3,72 +3,81 @@
 //
 #include "ring_buf.h"
 
-void RING_put(uint8_t symbol, RING_buffer_t* buf) {
-
-    buf->buffer[buf->idxIn++] = symbol;
-    if (buf->idxIn >= buf->size) {
-        buf->idxIn = 0;
-    }
-}
-
-uint8_t RING_pop(RING_buffer_t *buf)
-{
-    uint8_t retval = buf->buffer[buf->idxOut++];
-    if (buf->idxOut >= buf->size) {
-        buf->idxOut = 0;
+bool RING_put(uint8_t symbol, RING_buffer_t* ring) {
+    uint16_t next_idx = ring->idxIn + 1;
+    if (next_idx >= ring->size) {
+        next_idx = 0;
     }
 
-    return retval;
-}
-
-void RING_leave(uint16_t idx, RING_buffer_t *buf)
-{
-    for (uint16_t i = 0; i < idx; i++) {
-        RING_pop(buf);
-    }
-}
-
-int32_t RING_peek(uint16_t symb_offset, RING_buffer_t *buf)
-{
-    uint32_t pointer = buf->idxOut + symb_offset;
-    int32_t  retval = -1;
-    if (symb_offset < RING_get_count(buf))
-    {
-        if (pointer > buf->size) {
-            pointer -= buf->size;
-        }
-        retval = buf->buffer[pointer];
+    if (next_idx == ring->idxOut) {
+        return false;
     }
 
-    return retval;
+    ring->buffer[ring->idxIn] = symbol;
+    ring->idxIn = next_idx;
+
+    return true;
 }
 
-uint8_t* RING_get_ptrdata(uint16_t idx, RING_buffer_t *buf)
-{
-    return buf->buffer + buf->idxOut + idx;
-}
-
-uint16_t RING_get_count(RING_buffer_t *buf)
-{
-    uint16_t retval = 0;
-    if (buf->idxIn < buf->idxOut) {
-        retval = buf->size + buf->idxIn - buf->idxOut;
-    } else {
-        retval = buf->idxIn - buf->idxOut;
+bool RING_pop(RING_buffer_t* ring, uint8_t* symbol) {
+    if (ring->idxIn == ring->idxOut) {
+        return false;
     }
 
-    return retval;
+    *symbol = ring->buffer[ring->idxOut];
+    ring->idxOut++;
+    if (ring->idxOut >= ring->size) {
+        ring->idxOut = 0;
+    }
+
+    return true;
 }
 
-void RING_clear(RING_buffer_t* buf)
-{
-    buf->idxIn = 0;
-    buf->idxOut = 0;
+bool RING_peek(const RING_buffer_t* ring, uint16_t offset, uint8_t* symbol) {
+    if (offset >= RING_get_count(ring)) {
+        return false;
+    }
+
+    uint32_t index = (uint32_t)ring->idxOut + offset;
+    if (index >= ring->size) {
+        index -= ring->size;
+    }
+    *symbol = ring->buffer[(uint16_t)index];
+
+    return true;
 }
 
-void RING_init(RING_buffer_t *ring, uint8_t *buf, uint16_t size)
-{
+void RING_leave(uint16_t count, RING_buffer_t* ring) {
+    uint16_t available = RING_get_count(ring);
+    if (count > available) {
+        count = available;
+    }
+
+    uint32_t index = (uint32_t)ring->idxOut + count;
+    if (index >= ring->size) {
+        index -= ring->size;
+    }
+    ring->idxOut = (uint16_t)index;
+}
+
+uint16_t RING_get_count(const RING_buffer_t* ring) {
+    uint16_t idx_in = ring->idxIn;
+    uint16_t idx_out = ring->idxOut;
+
+    if (idx_in < idx_out) {
+        return ring->size + idx_in - idx_out;
+    }
+
+    return idx_in - idx_out;
+}
+
+void RING_clear(RING_buffer_t* ring) {
+    ring->idxIn = 0;
+    ring->idxOut = 0;
+}
+
+void RING_init(RING_buffer_t* ring, uint8_t* buffer, uint16_t size) {
+    ring->buffer = buffer;
     ring->size = size;
-    ring->buffer = buf;
     RING_clear(ring);
 }

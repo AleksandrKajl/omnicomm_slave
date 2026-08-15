@@ -95,10 +95,6 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  //Включаем прерывания по приходу данных и при ошибках
-    LL_USART_EnableIT_RXNE(USART1);
-    LL_USART_EnableIT_ERROR(USART1);
-
     SysTick_Config(SystemCoreClock/1000);   //Для генерации псевдослучайных чисел в функции sensor_get_data.
 
     //Создаём статические массивы для использования в качестве кольцевых буферов
@@ -107,6 +103,10 @@ int main(void)
 
     RING_init(&g_rx_buff, rxbuff_data, RING_BUFF_SZ);             //Инициализация кольцевых буферов
     RING_init(&g_have_cmd, havecmd_data, RING_BUFF_SZ);           //Инициализация кольцевых буферов
+
+    //Включаем прерывания по приходу данных и при ошибках после инициализации буфера
+    LL_USART_EnableIT_RXNE(USART1);
+    LL_USART_EnableIT_ERROR(USART1);
 
     Sensor_data_t sens_data;                                      //Создаём структуру для хранения значений полученных от датчика
     memset(&sens_data, 0x00, sizeof(Sensor_data_t));
@@ -122,8 +122,8 @@ int main(void)
       }
 
       //Если уже получили комманду
-      if (RING_get_count(&g_have_cmd) > 0) {
-          uint8_t cmd = RING_pop(&g_have_cmd);                      //Получаем её
+      uint8_t cmd = 0;
+      if (RING_pop(&g_have_cmd, &cmd)) {
           //Логика для разных команд
           if (cmd == CMD_GET_DATA) {
               sensor_get_data(&sens_data);                          //Получаем данные от датчика
