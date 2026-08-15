@@ -6,6 +6,8 @@
 #define OMNICOMM_SLAVE_UART_H
 #include <stdint.h>
 
+void UART1_RX_Callback(void);
+
 /*!
 * @brief Отправка данных по uart.
  * @param[in] dt - указатель на буфер с данными

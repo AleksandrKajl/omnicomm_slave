@@ -1,82 +1,37 @@
-/* USER CODE BEGIN Header */
-/**
-  ******************************************************************************
-  * @file    usart.c
-  * @brief   This file provides code for the configuration
-  *          of the USART instances.
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2025 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
-/* USER CODE END Header */
-/* Includes ------------------------------------------------------------------*/
 #include "usart.h"
 
-/* USER CODE BEGIN 0 */
-/* USER CODE END 0 */
+#include "stm32f1xx_ll_bus.h"
+#include "stm32f1xx_ll_gpio.h"
+#include "stm32f1xx_ll_usart.h"
 
-/* USART1 init function */
+void USART_init(void) {
+    LL_USART_InitTypeDef usart_config = {0};
+    LL_GPIO_InitTypeDef gpio_config = {0};
 
-void MX_USART1_UART_Init(void)
-{
+    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
+    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA);
 
-  /* USER CODE BEGIN USART1_Init 0 */
+    gpio_config.Pin = LL_GPIO_PIN_9;
+    gpio_config.Mode = LL_GPIO_MODE_ALTERNATE;
+    gpio_config.Speed = LL_GPIO_SPEED_FREQ_HIGH;
+    gpio_config.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+    LL_GPIO_Init(GPIOA, &gpio_config);
 
-  /* USER CODE END USART1_Init 0 */
+    gpio_config.Pin = LL_GPIO_PIN_10;
+    gpio_config.Mode = LL_GPIO_MODE_FLOATING;
+    LL_GPIO_Init(GPIOA, &gpio_config);
 
-  LL_USART_InitTypeDef USART_InitStruct = {0};
+    NVIC_SetPriority(USART1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
+    NVIC_EnableIRQ(USART1_IRQn);
 
-  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-  /* Peripheral clock enable */
-  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
-
-  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA);
-  /**USART1 GPIO Configuration
-  PA9   ------> USART1_TX
-  PA10   ------> USART1_RX
-  */
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_9;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_HIGH;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_10;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_FLOATING;
-  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /* USART1 interrupt Init */
-  NVIC_SetPriority(USART1_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0, 0));
-  NVIC_EnableIRQ(USART1_IRQn);
-
-  /* USER CODE BEGIN USART1_Init 1 */
-
-  /* USER CODE END USART1_Init 1 */
-  USART_InitStruct.BaudRate = 19200;
-  USART_InitStruct.DataWidth = LL_USART_DATAWIDTH_8B;
-  USART_InitStruct.StopBits = LL_USART_STOPBITS_1;
-  USART_InitStruct.Parity = LL_USART_PARITY_NONE;
-  USART_InitStruct.TransferDirection = LL_USART_DIRECTION_TX_RX;
-  USART_InitStruct.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
-  USART_InitStruct.OverSampling = LL_USART_OVERSAMPLING_16;
-  LL_USART_Init(USART1, &USART_InitStruct);
-  LL_USART_ConfigAsyncMode(USART1);
-  LL_USART_Enable(USART1);
-
-  /* USER CODE BEGIN USART1_Init 2 */
-  /* USER CODE END USART1_Init 2 */
-
+    usart_config.BaudRate = 19200;
+    usart_config.DataWidth = LL_USART_DATAWIDTH_8B;
+    usart_config.StopBits = LL_USART_STOPBITS_1;
+    usart_config.Parity = LL_USART_PARITY_NONE;
+    usart_config.TransferDirection = LL_USART_DIRECTION_TX_RX;
+    usart_config.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
+    usart_config.OverSampling = LL_USART_OVERSAMPLING_16;
+    LL_USART_Init(USART1, &usart_config);
+    LL_USART_ConfigAsyncMode(USART1);
+    LL_USART_Enable(USART1);
 }
-
-/* USER CODE BEGIN 1 */
-
-/* USER CODE END 1 */
