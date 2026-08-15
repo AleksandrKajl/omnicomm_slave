@@ -9,7 +9,6 @@
 #include <string.h>
 
 RING_buffer_t g_rx_buff;
-RING_buffer_t g_have_cmd;
 
 static void system_clock_init(void);
 
@@ -22,33 +21,29 @@ int main(void) {
     SysTick_Config(SystemCoreClock / 1000);
 
     uint8_t rx_buffer_data[RING_BUFF_SZ];
-    uint8_t command_buffer_data[RING_BUFF_SZ];
-
     RING_init(&g_rx_buff, rx_buffer_data, RING_BUFF_SZ);
-    RING_init(&g_have_cmd, command_buffer_data, RING_BUFF_SZ);
 
     LL_USART_EnableIT_RXNE(USART1);
     LL_USART_EnableIT_ERROR(USART1);
 
     Sensor_data_t sensor_data;
     memset(&sensor_data, 0, sizeof(sensor_data));
+    Transceiver_parser_t parser;
+    transceiver_parser_init(&parser);
 
     while (1) {
-        if (RING_get_count(&g_rx_buff) >= REQ_SZ) {
-            transceiver_get_msg(&g_rx_buff);
-        }
-
+        uint8_t received_byte = 0;
         uint8_t command = 0;
-        if (RING_pop(&g_have_cmd, &command)) {
-            if (command == CMD_GET_DATA) {
-                sensor_get_data(&sensor_data);
-                transceiver_send_msg((uint8_t*)&sensor_data, CMD_GET_DATA, sizeof(sensor_data));
-            } else if (command == CMD_EXAMPLE) {
-                // Резерв для добавления следующей команды протокола.
+        while (RING_pop(&g_rx_buff, &received_byte)) {
+            if (transceiver_parse_byte(&parser, received_byte, &command)) {
+                if (command == CMD_GET_DATA) {
+                    sensor_get_data(&sensor_data);
+                    transceiver_send_msg((uint8_t*)&sensor_data, CMD_GET_DATA, sizeof(sensor_data));
+                } else if (command == CMD_EXAMPLE) {
+                    // Резерв для добавления следующей команды протокола.
+                }
             }
         }
-
-        LL_mDelay(100);
     }
 }
 

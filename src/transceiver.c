@@ -1,75 +1,94 @@
-//
-// Created by Aleksandr on 22.01.2025.
-//
 #include "transceiver.h"
-#include "ring_buf.h"
+
 #include "crc.h"
 #include "uart.h"
+
 #include <string.h>
 
-uint8_t transceiver_get_msg(RING_buffer_t *ring_buff)
-{
-    extern RING_buffer_t g_have_cmd;       //Кольцевой буфер для полученных команд
-    const uint8_t cmd_offset = 2;       //Смещение cmd от начала сообщения
-    uint8_t crc = 0;
-    uint8_t symbol = 0;
-    uint16_t data_cnt = RING_get_count(ring_buff);          //Количество принятых символов в буфере
-    for (uint16_t i = 0; i < data_cnt; i++) {
-        RING_peek(ring_buff, i, &symbol);
-        if (symbol == CMD_PREFIX) {        //Начало запроса
-            if (data_cnt - i < REQ_SZ) {
-                break;
+static void parser_wait_for_prefix(Transceiver_parser_t* parser, uint8_t byte) {
+    parser->state = TRANSCEIVER_WAIT_PREFIX;
+    parser->crc = 0;
+
+    if (byte == CMD_PREFIX) {
+        parser->crc = crc8_update(byte, parser->crc);
+        parser->state = TRANSCEIVER_WAIT_ADDRESS;
+    }
+}
+
+static void parser_recover(Transceiver_parser_t* parser, uint8_t byte) {
+    uint8_t previous_address = parser->address;
+    uint8_t previous_command = parser->command;
+
+    if (previous_address == CMD_PREFIX) {
+        parser->crc = crc8_update(CMD_PREFIX, 0);
+        parser->address = previous_command;
+        parser->crc = crc8_update(parser->address, parser->crc);
+        parser->command = byte;
+        parser->crc = crc8_update(parser->command, parser->crc);
+        parser->state = TRANSCEIVER_WAIT_CRC;
+    } else if (previous_command == CMD_PREFIX) {
+        parser->crc = crc8_update(CMD_PREFIX, 0);
+        parser->address = byte;
+        parser->crc = crc8_update(parser->address, parser->crc);
+        parser->state = TRANSCEIVER_WAIT_COMMAND;
+    } else {
+        parser_wait_for_prefix(parser, byte);
+    }
+}
+
+void transceiver_parser_init(Transceiver_parser_t* parser) {
+    parser->address = 0;
+    parser->command = 0;
+    parser_wait_for_prefix(parser, 0);
+}
+
+bool transceiver_parse_byte(Transceiver_parser_t* parser, uint8_t byte, uint8_t* command) {
+    switch (parser->state) {
+    case TRANSCEIVER_WAIT_PREFIX:
+        parser_wait_for_prefix(parser, byte);
+        break;
+
+    case TRANSCEIVER_WAIT_ADDRESS:
+        parser->address = byte;
+        parser->crc = crc8_update(byte, parser->crc);
+        parser->state = TRANSCEIVER_WAIT_COMMAND;
+        break;
+
+    case TRANSCEIVER_WAIT_COMMAND:
+        parser->command = byte;
+        parser->crc = crc8_update(byte, parser->crc);
+        parser->state = TRANSCEIVER_WAIT_CRC;
+        break;
+
+    case TRANSCEIVER_WAIT_CRC:
+        if (byte == parser->crc) {
+            bool addressed_to_device = parser->address == NET_ADDR;
+            if (addressed_to_device) {
+                *command = parser->command;
             }
-            //Для подддержки команд разной длинны нужно их размер указывать в команде(запросе).
-            crc = 0;
-            for (uint16_t crc_idx = 0; crc_idx < REQ_SZ - 1; crc_idx++) {
-                RING_peek(ring_buff, i + crc_idx, &symbol);
-                crc = crc8_update(symbol, crc);
-            }
-            //Если crc сумма совпадает
-            RING_peek(ring_buff, i + REQ_SZ - 1, &symbol);
-            if (crc == symbol) {
-                RING_peek(ring_buff, i + 1, &symbol);
-                if (symbol != NET_ADDR) {          //Если не нам
-                    i += REQ_SZ;                                                  //Пропускаем это сообщение
-                    continue;
-                }
-                //Помещаем команду в кольцевой буфер для команд
-                RING_peek(ring_buff, i + cmd_offset, &symbol);
-                if (!RING_put(symbol, &g_have_cmd)) {
-                    return -1;
-                }
-                //Удаляем из буфера
-                RING_leave(i + REQ_SZ, ring_buff);
-                return 0;
-            }
+            parser_wait_for_prefix(parser, 0);
+            return addressed_to_device;
         }
+
+        parser_recover(parser, byte);
+        break;
     }
 
-    //Если нет не одного сообщения, удаляем проверенные данные
-    RING_leave(data_cnt, ring_buff);
-
-    return -1;
+    return false;
 }
 
-void transceiver_send_msg(uint8_t *data, uint8_t cmd , uint16_t size)
-{
-    //Заполняем структуру служебными данными
-    Service_info_t src_info;
-    src_info.prefix = 0x3E;
-    src_info.net_addr = NET_ADDR;
-    src_info.cmd = cmd;
+void transceiver_send_msg(const uint8_t* data, uint8_t command, uint16_t size) {
+    Service_info_t service_info;
+    service_info.prefix = 0x3E;
+    service_info.net_addr = NET_ADDR;
+    service_info.cmd = command;
 
-    const uint16_t send_arrsz = size + sizeof(Service_info_t) + 1;
-    //Создаём массив для отправляемых данных
-    uint8_t send_arr[send_arrsz];
-    //Заполняем служебными данными
-    memcpy(send_arr, &src_info, sizeof(Service_info_t));
-    //Сами данные
-    memcpy(send_arr + sizeof(Service_info_t), data, size);
-    //Вычесляем crc сумму всех данных
-    uint8_t crc = crc8_calculate(send_arr, send_arrsz - 1);        //Размер массива без crc суммы
-    send_arr[send_arrsz - 1] = crc;                             //Добавляем к передоваемым данным
-    UART_TX(send_arr, send_arrsz);                              //Отправляем данные по uart
+    const uint16_t message_size = size + sizeof(Service_info_t) + 1;
+    uint8_t message[message_size];
+
+    memcpy(message, &service_info, sizeof(Service_info_t));
+    memcpy(message + sizeof(Service_info_t), data, size);
+
+    message[message_size - 1] = crc8_calculate(message, message_size - 1);
+    UART_TX(message, message_size);
 }
-
