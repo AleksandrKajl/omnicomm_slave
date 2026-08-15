@@ -24,3 +24,24 @@ target_compile_options(crc_test PRIVATE
 )
 
 add_test(NAME crc_test COMMAND crc_test)
+
+add_executable(ring_buf_test
+    ring_buf_test.c
+    ../src/ring_buf.c
+)
+
+target_include_directories(ring_buf_test PRIVATE
+    ../inc
+)
+
+target_compile_features(ring_buf_test PRIVATE
+    c_std_99
+)
+
+target_compile_options(ring_buf_test PRIVATE
+    -Wall
+    -Wextra
+    -Wpedantic
+)
+
+add_test(NAME ring_buf_test COMMAND ring_buf_test)
