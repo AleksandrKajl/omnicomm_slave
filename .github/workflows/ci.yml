@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  host-tests:
+    name: Host tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure tests
+        run: cmake -S tests -B build/tests -G Ninja
+
+      - name: Build tests
+        run: cmake --build build/tests
+
+      - name: Run tests
+        run: ctest --test-dir build/tests --output-on-failure
+
+  firmware-build:
+    name: Firmware build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Arm GNU Toolchain
+        run: sudo apt-get update && sudo apt-get install --yes gcc-arm-none-eabi
+
+      - name: Configure firmware
+        run: cmake -S . -B build/firmware -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build firmware
+        run: cmake --build build/firmware
