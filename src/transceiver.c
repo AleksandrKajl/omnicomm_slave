@@ -90,5 +90,5 @@ void transceiver_send_msg(const uint8_t* data, uint8_t command, uint16_t size) {
     memcpy(message + sizeof(Service_info_t), data, size);
 
     message[message_size - 1] = crc8_calculate(message, message_size - 1);
-    UART_TX(message, message_size);
+    (void)UART_TX(message, message_size);
 }

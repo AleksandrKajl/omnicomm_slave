@@ -51,7 +51,13 @@ void TIM2_IRQHandler(void) {
 void USART1_IRQHandler(void) {
     if (LL_USART_IsActiveFlag_RXNE(USART1) && LL_USART_IsEnabledIT_RXNE(USART1)) {
         UART1_RX_Callback();
-    } else if (LL_USART_IsActiveFlag_ORE(USART1)) {
+    }
+
+    if (LL_USART_IsActiveFlag_TXE(USART1) && LL_USART_IsEnabledIT_TXE(USART1)) {
+        UART1_TX_Callback();
+    }
+
+    if (LL_USART_IsActiveFlag_ORE(USART1)) {
         LL_USART_ClearFlag_ORE(USART1);
     } else if (LL_USART_IsActiveFlag_FE(USART1)) {
         LL_USART_ClearFlag_FE(USART1);

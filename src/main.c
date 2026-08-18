@@ -4,6 +4,7 @@
 #include "ring_buf.h"
 #include "sensor.h"
 #include "transceiver.h"
+#include "uart.h"
 #include "usart.h"
 
 #include <string.h>
@@ -22,6 +23,7 @@ int main(void) {
 
     uint8_t rx_buffer_data[RING_BUFF_SZ];
     RING_init(&g_rx_buff, rx_buffer_data, RING_BUFF_SZ);
+    UART_init();
 
     LL_USART_EnableIT_RXNE(USART1);
     LL_USART_EnableIT_ERROR(USART1);

@@ -6,9 +6,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
-void UART_TX(uint8_t* data, uint16_t size) {
+bool UART_TX(const uint8_t* data, uint16_t size) {
     (void)data;
     (void)size;
+    return true;
 }
 
 static int check(bool condition, const char* message) {
