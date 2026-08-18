@@ -54,7 +54,6 @@ add_executable(transceiver_parser_test
 
 target_include_directories(transceiver_parser_test PRIVATE
     ../inc
-    ../inc/hardware
 )
 
 target_compile_features(transceiver_parser_test PRIVATE

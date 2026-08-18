@@ -1,8 +1,6 @@
 #include "transceiver.h"
 
 #include "crc.h"
-#include "uart.h"
-
 #include <string.h>
 
 static void parser_wait_for_prefix(Transceiver_parser_t* parser, uint8_t byte) {
@@ -77,18 +75,25 @@ bool transceiver_parse_byte(Transceiver_parser_t* parser, uint8_t byte, uint8_t*
     return false;
 }
 
-void transceiver_send_msg(const uint8_t* data, uint8_t command, uint16_t size) {
+uint16_t transceiver_build_response(uint8_t* response, uint16_t response_capacity, const uint8_t* data, uint8_t command, uint16_t size) {
     Service_info_t service_info;
     service_info.prefix = 0x3E;
     service_info.net_addr = NET_ADDR;
     service_info.cmd = command;
 
-    const uint16_t message_size = size + sizeof(Service_info_t) + 1;
-    uint8_t message[message_size];
+    const uint16_t response_overhead = sizeof(Service_info_t) + 1;
+    if (size > UINT16_MAX - response_overhead) {
+        return 0;
+    }
 
-    memcpy(message, &service_info, sizeof(Service_info_t));
-    memcpy(message + sizeof(Service_info_t), data, size);
+    uint16_t response_size = size + response_overhead;
+    if (response_size > response_capacity) {
+        return 0;
+    }
 
-    message[message_size - 1] = crc8_calculate(message, message_size - 1);
-    (void)UART_TX(message, message_size);
+    memcpy(response, &service_info, sizeof(Service_info_t));
+    memcpy(response + sizeof(Service_info_t), data, size);
+    response[response_size - 1] = crc8_calculate(response, response_size - 1);
+
+    return response_size;
 }

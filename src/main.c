@@ -40,7 +40,12 @@ int main(void) {
             if (transceiver_parse_byte(&parser, received_byte, &command)) {
                 if (command == CMD_GET_DATA) {
                     sensor_get_data(&sensor_data);
-                    transceiver_send_msg((uint8_t*)&sensor_data, CMD_GET_DATA, sizeof(sensor_data));
+                    uint8_t response[sizeof(Service_info_t) + sizeof(sensor_data) + 1];
+                    uint16_t response_size =
+                        transceiver_build_response(response, sizeof(response), (const uint8_t*)&sensor_data, CMD_GET_DATA, sizeof(sensor_data));
+                    if (response_size > 0) {
+                        (void)UART_TX(response, response_size);
+                    }
                 } else if (command == CMD_EXAMPLE) {
                     // Резерв для добавления следующей команды протокола.
                 }

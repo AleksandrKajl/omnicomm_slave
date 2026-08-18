@@ -6,12 +6,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-bool UART_TX(const uint8_t* data, uint16_t size) {
-    (void)data;
-    (void)size;
-    return true;
-}
-
 static int check(bool condition, const char* message) {
     if (!condition) {
         printf("%s\n", message);
@@ -151,6 +145,25 @@ static int test_recovery_after_abandoned_request(void) {
     return failed;
 }
 
+static int test_response_building(void) {
+    const uint8_t data[] = {0x11, 0x22, 0x33};
+    uint8_t response[sizeof(Service_info_t) + sizeof(data) + 1];
+
+    uint16_t response_size = transceiver_build_response(response, sizeof(response), data, CMD_GET_DATA, sizeof(data));
+
+    int failed = 0;
+    failed += check(response_size == sizeof(response), "response size is incorrect");
+    failed += check(response[0] == 0x3E, "response prefix is incorrect");
+    failed += check(response[1] == NET_ADDR, "response address is incorrect");
+    failed += check(response[2] == CMD_GET_DATA, "response command is incorrect");
+    failed += check(response[3] == data[0] && response[4] == data[1] && response[5] == data[2], "response payload is incorrect");
+    failed += check(response[response_size - 1] == crc8_calculate(response, response_size - 1), "response CRC is incorrect");
+    failed += check(transceiver_build_response(response, sizeof(response) - 1, data, CMD_GET_DATA, sizeof(data)) == 0,
+                    "response was written into a small buffer");
+
+    return failed;
+}
+
 int main(void) {
     int failed = 0;
 
@@ -160,6 +173,7 @@ int main(void) {
     failed += test_wrong_address_and_crc();
     failed += test_recovery_after_invalid_crc();
     failed += test_recovery_after_abandoned_request();
+    failed += test_response_building();
 
     if (failed == 0) {
         printf("Transceiver parser tests passed\n");
